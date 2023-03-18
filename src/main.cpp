@@ -2,10 +2,24 @@
 #include "SDL_render.h"
 #include <glm/glm.hpp>
 #include <chrono>
+#include <vector>
+#include "player.h"
 
 const int RESX = 1280; //960;
 const int RESY = 720; //540;
-const int pixelCount = RESX * RESY;
+const int TILE_SIZE = 64;
+
+void buildTerrain(std::vector<SDL_Rect>& tiles, int xOffset) {
+    // Make some ground
+    for (int i=0; i<4; i++) {
+        SDL_Rect rect;
+        rect.x = i * 64 + xOffset;
+        rect.y = RESY - TILE_SIZE;
+        rect.w = TILE_SIZE;
+        rect.h = TILE_SIZE;
+        tiles.push_back(rect);
+    }
+}
 
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
@@ -23,39 +37,75 @@ int main(int argc, char *argv[]) {
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
+    std::vector<SDL_Rect> tiles;
+    buildTerrain(tiles, 0);
+    buildTerrain(tiles, TILE_SIZE * 8);
+    buildTerrain(tiles, TILE_SIZE * 12);
 
-    // Timers 
-    auto startTime = std::chrono::high_resolution_clock::now();
-    auto endTime = std::chrono::high_resolution_clock::now();
-    double elapsedMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
-    printf("Time taken: %fms\n", elapsedMs);
-
-    SDL_Rect rect;
-    rect.x = 64;
-    rect.y = 64;
-    rect.w = 64;
-    rect.h = 64;
+    Player* player = new Player();
+    player->init(glm::vec2(TILE_SIZE, RESY * 0.5f));
+    bool moveLeft = false;
+    bool moveRight = false;
     
     SDL_Event event;
     while (running) {
+        auto startTime = std::chrono::high_resolution_clock::now();
         SDL_RenderClear(renderer);
 
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
+            } else if (event.type == SDL_KEYDOWN) {
+                // Player character controls
+                if (event.key.keysym.sym == SDLK_a) {
+                    moveLeft = true;
+                }
+                if (event.key.keysym.sym == SDLK_d) {
+                    moveRight = true;
+                }
+                if (event.key.keysym.sym == SDLK_SPACE) {
+                    player->jump();
+                }
+            } else if (event.type == SDL_KEYUP) {
+                if (event.key.keysym.sym == SDLK_a) {
+                    moveLeft = false;
+                }
+                if (event.key.keysym.sym == SDLK_d) {
+                    moveRight = false;
+                }
             }
         }
-        //
-        // Draw code
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        SDL_RenderDrawRect(renderer, &rect);
-        // SDL_RenderFillRect
+
+        // Updates
+        if (moveLeft) {
+            player->moveLeft();
+        }
+        if (moveRight) {
+            player->moveRight();
+        }
+        player->update(16.0f / 1000.0f, tiles);
+
+
+        // Draw terrain 
+        for (auto iter = tiles.begin(); iter < tiles.end(); iter++) {
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            SDL_RenderFillRect(renderer, &(*iter));
+        }
+
+        // Draw character
+        player->render(renderer);
+
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderPresent(renderer);
-
-        SDL_Delay(16);
+        auto endTime = std::chrono::high_resolution_clock::now();
+        double elapsedMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+        if (elapsedMs < 16) {
+            SDL_Delay(16.0 - elapsedMs);
+        }
     }
 
+    delete player;
+    player = nullptr;
     SDL_DestroyWindow(window);
     SDL_Quit();
 

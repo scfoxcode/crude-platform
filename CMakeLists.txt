@@ -13,12 +13,15 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 # Our own includes
 include_directories("src/")
+include_directories("include/")
 
 # Include glm for vector/matrix operations
 include_directories("libs/glm-master/")
 
 add_executable(platformer
     src/main.cpp
+    src/player.cpp
+    src/collisions.cpp
 )
 
 target_link_libraries(platformer ${SDL2_LIBRARIES})
