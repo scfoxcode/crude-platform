@@ -9,12 +9,12 @@ const int RESX = 1280; //960;
 const int RESY = 720; //540;
 const int TILE_SIZE = 64;
 
-void buildTerrain(std::vector<SDL_Rect>& tiles, int xOffset) {
+void buildTerrain(std::vector<SDL_Rect>& tiles, int num, int xOffset, int yOffset) {
     // Make some ground
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<num; i++) {
         SDL_Rect rect;
         rect.x = i * 64 + xOffset;
-        rect.y = RESY - TILE_SIZE;
+        rect.y = RESY - TILE_SIZE - yOffset * TILE_SIZE;
         rect.w = TILE_SIZE;
         rect.h = TILE_SIZE;
         tiles.push_back(rect);
@@ -38,12 +38,13 @@ int main(int argc, char *argv[]) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
     std::vector<SDL_Rect> tiles;
-    buildTerrain(tiles, 0);
-    buildTerrain(tiles, TILE_SIZE * 8);
-    buildTerrain(tiles, TILE_SIZE * 12);
+    buildTerrain(tiles, 1, TILE_SIZE, 0);
+    buildTerrain(tiles, 4, TILE_SIZE * 6, 0);
+    buildTerrain(tiles, 3, TILE_SIZE * 12, 0);
+    buildTerrain(tiles, 2, TILE_SIZE * 16, 1);
 
     Player* player = new Player();
-    player->init(glm::vec2(TILE_SIZE, RESY * 0.5f));
+    player->init(glm::vec2(TILE_SIZE, float(RESY) * 0.5f));
     bool moveLeft = false;
     bool moveRight = false;
     

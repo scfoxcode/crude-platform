@@ -4,6 +4,7 @@
 Player::Player() {
 }
 
+// Ahh position is top left remember...
 void Player::init(glm::vec2 pos) {
     m_position = pos;
 
@@ -19,34 +20,21 @@ void Player::update(float dt, std::vector<SDL_Rect>& tiles) {
     m_velocity.x *= 0.93;
     m_velocity.y += 60.0f * dt;
 
-    // Apply friction, whether you are touching a surface or not
-    // m_velocity.x *=
+    // Update position
+    m_position += m_velocity;
 
-    SDL_Rect newRect = m_rect;
-    glm::vec2 newPosition = m_position;
+    // Update rect
+    m_rect.x = m_position.x;
+    m_rect.y = m_position.y;
 
-    // Proposed position
-    newPosition += m_velocity;
-
-    // Proposed rect
-    newRect.x = newPosition.x;
-    newRect.y = newPosition.y;
-
-    // Resolve terrain collisions
+    // Test and resolve terrain collisions
     for (auto iter = tiles.begin(); iter < tiles.end(); iter++) {
-        bool hasCollided = Collisions::isOverlapping(newRect, *iter);
+        bool hasCollided = Collisions::isOverlapping(m_rect, *iter);
         if (hasCollided) {
-            // m_velocity.x = 0; // Can't keep this, it assumes a top down collision
-            m_position.x = newPosition.x;
-            m_rect.x = newRect.x;
-            m_velocity.y = 0;
+            Collisions::resolveCollision(m_position, m_velocity, m_rect, *iter);
             return;
         }
     }
-
-    // No collision
-    m_position = newPosition;
-    m_rect = newRect;
 }
 
 void Player::moveLeft() {
